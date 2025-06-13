@@ -1,0 +1,227 @@
+#!/bin/bash
+
+## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+##                                         BEONSAFE                                           ##
+## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+
+# Cores
+amarelo="\e[33m"
+verde="\e[32m"
+branco="\e[97m"
+bege="\e[93m"
+vermelho="\e[91m"
+reset="\e[0m"
+
+# Funções de exibição
+logo_beonsafe() {
+    clear
+    echo ""
+    echo -e "$amarelo===================================================================================================$reset"
+    echo -e "$amarelo=                                                                                                 $amarelo=$reset"
+    echo -e "$amarelo=                     $branco ██████╗ ███████╗ ██████╗ ███╗   ██╗███████╗ █████╗ ███████╗███████╗  $amarelo=$reset"
+    echo -e "$amarelo=                     $branco ██╔══██╗██╔════╝██╔═══██╗████╗  ██║██╔════╝██╔══██╗██╔════╝██╔════╝  $amarelo=$reset"
+    echo -e "$amarelo=                     $branco ██████╔╝█████╗  ██║   ██║██╔██╗ ██║███████╗███████║█████╗  █████╗    $amarelo=$reset"
+    echo -e "$amarelo=                     $branco ██╔══██╗██╔══╝  ██║   ██║██║╚██╗██║╚════██║██╔══██║██╔══╝  ██╔══╝    $amarelo=$reset"
+    echo -e "$amarelo=                     $branco ██████╔╝███████╗╚██████╔╝██║ ╚████║███████║██║  ██║██║     ███████╗  $amarelo=$reset"
+    echo -e "$amarelo=                     $branco ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝  $amarelo=$reset"
+    echo -e "$amarelo=                                                                                                 $amarelo=$reset"
+    echo -e "$amarelo===================================================================================================$reset"
+    echo ""
+    echo ""
+}
+
+# Menu principal
+menu_principal() {
+    logo_beonsafe
+    echo -e "$verde[1]$reset Instalar Docker"
+    echo -e "$verde[2]$reset Instalar Portainer"
+    echo -e "$verde[3]$reset Instalar Watchtower"
+    echo -e "$verde[4]$reset Instalar Pacotes Essenciais"
+    echo -e "$verde[5]$reset Instalar Todos"
+    echo -e "$verde[0]$reset Sair"
+    echo ""
+    echo -n "Escolha uma opção: "
+    read opcao
+
+    case $opcao in
+        1) instalar_docker ;;
+        2) instalar_portainer ;;
+        3) instalar_watchtower ;;
+        4) instalar_pacotes ;;
+        5) instalar_todos ;;
+        0) echo "Saindo..." ; exit 0 ;;
+        *) echo "Opção inválida!" ; sleep 2 ; menu_principal ;;
+    esac
+}
+
+# Função para instalar Docker
+instalar_docker() {
+    logo_beonsafe
+    echo "Instalando Docker..."
+    
+    # Remover versões antigas
+    sudo apt-get remove docker docker-engine docker.io containerd runc -y > /dev/null 2>&1
+    
+    # Instalar dependências
+    sudo apt-get update > /dev/null 2>&1
+    sudo apt-get install -y \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release > /dev/null 2>&1
+    
+    # Adicionar chave GPG oficial do Docker
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg > /dev/null 2>&1
+    
+    # Configurar repositório estável
+    echo \
+      "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    # Instalar Docker Engine
+    sudo apt-get update > /dev/null 2>&1
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io > /dev/null 2>&1
+    
+    # Adicionar usuário ao grupo docker
+    sudo usermod -aG docker $USER > /dev/null 2>&1
+    
+    # Verificar instalação
+    if [ $(docker --version | grep -c "Docker version") -eq 1 ]; then
+        echo -e "$verde[✓]$reset Docker instalado com sucesso!"
+    else
+        echo -e "$vermelho[✗]$reset Falha na instalação do Docker."
+    fi
+    
+    echo ""
+    echo "Pressione ENTER para continuar..."
+    read
+    menu_principal
+}
+
+# Função para instalar Portainer
+instalar_portainer() {
+    logo_beonsafe
+    echo "Instalando Portainer..."
+    
+    # Verificar se o Docker está instalado
+    if [ $(docker --version | grep -c "Docker version") -eq 0 ]; then
+        echo -e "$vermelho[✗]$reset Docker não está instalado. Instale o Docker primeiro."
+        sleep 3
+        menu_principal
+        return
+    fi
+    
+    # Criar volume para o Portainer
+    docker volume create portainer_data > /dev/null 2>&1
+    
+    # Remover container existente se houver
+    docker rm -f portainer > /dev/null 2>&1
+    
+    # Instalar Portainer
+    docker run -d -p 8000:8000 -p 9443:9443 --name portainer \
+        --restart=always \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v portainer_data:/data \
+        portainer/portainer-ce:latest > /dev/null 2>&1
+    
+    # Verificar instalação
+    if [ $(docker ps | grep -c "portainer") -eq 1 ]; then
+        echo -e "$verde[✓]$reset Portainer instalado com sucesso!"
+        echo -e "Acesse: https://$(hostname -I | awk '{print $1}'):9443"
+    else
+        echo -e "$vermelho[✗]$reset Falha na instalação do Portainer."
+    fi
+    
+    echo ""
+    echo "Pressione ENTER para continuar..."
+    read
+    menu_principal
+}
+
+# Função para instalar Watchtower
+instalar_watchtower() {
+    logo_beonsafe
+    echo "Instalando Watchtower..."
+    
+    # Verificar se o Docker está instalado
+    if [ $(docker --version | grep -c "Docker version") -eq 0 ]; then
+        echo -e "$vermelho[✗]$reset Docker não está instalado. Instale o Docker primeiro."
+        sleep 3
+        menu_principal
+        return
+    fi
+    
+    # Remover container existente se houver
+    docker rm -f watchtower > /dev/null 2>&1
+    
+    # Instalar Watchtower
+    docker run -d \
+        --name watchtower \
+        --restart=always \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        containrrr/watchtower \
+        --cleanup --interval 86400 > /dev/null 2>&1
+    
+    # Verificar instalação
+    if [ $(docker ps | grep -c "watchtower") -eq 1 ]; then
+        echo -e "$verde[✓]$reset Watchtower instalado com sucesso!"
+    else
+        echo -e "$vermelho[✗]$reset Falha na instalação do Watchtower."
+    fi
+    
+    echo ""
+    echo "Pressione ENTER para continuar..."
+    read
+    menu_principal
+}
+
+# Função para instalar pacotes essenciais
+instalar_pacotes() {
+    logo_beonsafe
+    echo "Instalando pacotes essenciais..."
+    
+    # Atualizar repositórios
+    sudo apt update > /dev/null 2>&1
+    
+    # Instalar pacotes
+    sudo apt install -y \
+        curl \
+        wget \
+        git \
+        htop \
+        net-tools \
+        zip \
+        unzip \
+        nano \
+        vim \
+        python3 \
+        python3-pip \
+        jq > /dev/null 2>&1
+    
+    echo -e "$verde[✓]$reset Pacotes essenciais instalados com sucesso!"
+    
+    echo ""
+    echo "Pressione ENTER para continuar..."
+    read
+    menu_principal
+}
+
+# Função para instalar todos os componentes
+instalar_todos() {
+    instalar_docker
+    instalar_portainer
+    instalar_watchtower
+    instalar_pacotes
+    
+    logo_beonsafe
+    echo -e "$verde[✓]$reset Todos os componentes foram instalados com sucesso!"
+    
+    echo ""
+    echo "Pressione ENTER para continuar..."
+    read
+    menu_principal
+}
+
+# Iniciar o script
+menu_principal
