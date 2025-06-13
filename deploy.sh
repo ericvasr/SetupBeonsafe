@@ -47,7 +47,7 @@ server {
     listen 80;
     server_name setup.beonsafe.com.br;
 
-    root /var/www/beonsafe;
+    root /var/www/setup.beonsafe.com.br;
     index index.html;
 
     location / {
@@ -55,7 +55,7 @@ server {
     }
 
     location /beonsafe_script.sh {
-        alias /var/www/beonsafe/beonsafe_script.sh;
+        alias /var/www/setup.beonsafe.com.br/beonsafe_script.sh;
         default_type application/octet-stream;
     }
 }
@@ -68,19 +68,19 @@ systemctl restart nginx || erro "Falha ao reiniciar Nginx"
 
 # Criar diretório do site
 aviso "Criando estrutura de diretórios..."
-mkdir -p /var/www/beonsafe || erro "Falha ao criar diretório"
+mkdir -p /var/www/setup.beonsafe.com.br || erro "Falha ao criar diretório"
 
 # Copiar arquivos
 aviso "Copiando arquivos..."
-cp beonsafe_script.sh /var/www/beonsafe/ || erro "Falha ao copiar script"
-cp -r SetupBeonsafe /var/www/beonsafe/ || erro "Falha ao copiar SetupBeonsafe"
-cp index.html /var/www/beonsafe/ || erro "Falha ao copiar index.html"
+cp Beonsafesetup/beonsafe_script.sh /var/www/setup.beonsafe.com.br/ || erro "Falha ao copiar script"
+cp -r Beonsafesetup/SetupBeonsafe /var/www/setup.beonsafe.com.br/ || erro "Falha ao copiar SetupBeonsafe"
+cp index.html /var/www/setup.beonsafe.com.br/ || erro "Falha ao copiar index.html"
 
 # Configurar permissões
 aviso "Configurando permissões..."
-chmod +x /var/www/beonsafe/beonsafe_script.sh
-chmod +x /var/www/beonsafe/SetupBeonsafe/SetupBeonsafe
-chown -R www-data:www-data /var/www/beonsafe
+chmod +x /var/www/setup.beonsafe.com.br/beonsafe_script.sh
+chmod +x /var/www/setup.beonsafe.com.br/SetupBeonsafe/SetupBeonsafe
+chown -R www-data:www-data /var/www/setup.beonsafe.com.br
 
 # Configurar SSL (opcional)
 aviso "Deseja configurar SSL com Let's Encrypt? (s/n)"
