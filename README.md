@@ -89,7 +89,7 @@ Este é o script principal que oferece um menu interativo para instalação de c
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/beonsafe/SetupBeonsafe.git
+git clone https://github.com/ericvasr/SetupBeonsafe.git
 ```
 
 2. Execute o script de inicialização:
